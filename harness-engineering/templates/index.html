@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Multi-Agent Support Harness</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}?v=5.0">
+    <style>
+        :root {
+            --primary: #4338ca;
+            --primary-hover: #3730a3;
+            --primary-light: #eef2ff;
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --border-focus: #6366f1;
+            --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.04);
+            --shadow-md: 0 10px 25px -5px rgb(15 23 42 / 0.08), 0 4px 6px -2px rgb(15 23 42 / 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        .container {
+            max-width: 980px;
+            width: 92%;
+            margin: 0 auto;
+            padding-top: 52px;
+        }
+
+        /* Top Bar Header */
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .category-tag {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .pill-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 7px 16px;
+            border-radius: 9999px;
+            font-size: 13.5px;
+            font-weight: 700;
+        }
+
+        .main-title {
+            font-size: clamp(32px, 4.5vw, 48px);
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 14px;
+        }
+
+        .main-subtitle {
+            color: var(--text-muted);
+            font-size: 17px;
+            max-width: 760px;
+            line-height: 1.65;
+            margin-bottom: 36px;
+        }
+
+        /* Workflow Visualizer Rows */
+        .workflow-section {
+            margin-bottom: 36px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .nodes-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .node-card {
+            background: #ffffff;
+            border: 1.5px solid var(--border-color);
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: var(--shadow-sm);
+            flex: 1;
+            min-width: 180px;
+            transition: all 0.3s ease;
+        }
+
+        .node-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .node-num {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            color: #ffffff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 15px;
+            flex-shrink: 0;
+            transition: background 0.3s ease;
+        }
+
+        .node-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .node-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .node-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .node-status-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: #f1f5f9;
+            color: #475569;
+            white-space: nowrap;
+        }
+
+        /* Interactive Node States */
+        .node-card.active {
+            border-color: #6366f1;
+            background: #eef2ff;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+            transform: translateY(-2px);
+        }
+
+        .node-card.active .node-num {
+            background: #6366f1;
+            animation: pulse-bg 1.5s infinite;
+        }
+
+        .node-card.success {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        .node-card.success .node-num {
+            background: #16a34a;
+        }
+
+        .node-card.success .node-status-tag {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .node-card.blocked {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .node-card.blocked .node-num {
+            background: #dc2626;
+        }
+
+        .node-card.blocked .node-status-tag {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .node-arrow {
+            color: #94a3b8;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .loop-badge {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 9px 16px;
+            border-radius: 9999px;
+            white-space: nowrap;
+        }
+
+        @keyframes pulse-bg {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* Query Input Card */
+        .query-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 22px;
+            padding: 32px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 40px;
+        }
+
+        .query-label {
+            display: block;
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 16px;
+        }
+
+        .input-inline-group {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .input-inline-group input {
+            flex: 1;
+            height: 56px;
+            background: #f8fafc;
+            border: 1.5px solid var(--border-color);
+            border-radius: 14px;
+            padding: 0 20px;
+            font-family: inherit;
+            font-size: 16px;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-inline-group input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+            background: #ffffff;
+        }
+
+        .run-btn {
+            height: 56px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            padding: 0 28px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            white-space: nowrap;
+            box-shadow: 0 6px 16px rgba(67, 56, 202, 0.25);
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .run-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .run-btn:active {
+            transform: scale(0.98);
+        }
+
+        .run-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .try-prompts {
+            font-size: 14px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .preset-pill {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 14px;
+            padding: 0;
+        }
+
+        .preset-pill:hover {
+            color: var(--primary-hover);
+        }
+
+        /* Results & Execution Trace Timeline */
+        .hidden {
+            display: none !important;
+        }
+
+        .trace-container {
+            margin-top: 24px;
+        }
+
+        .trace-top-bar {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            gap: 12px;
+        }
+
+        .trace-category {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .trace-main-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .trace-right-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 7px 16px;
+            border-radius: 9999px;
+            font-size: 13.5px;
+            font-weight: 700;
+        }
+
+        /* Telemetry Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-name {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .stat-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        /* Output Response Card */
+        .output-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 32px;
+        }
+
+        .output-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .output-card-header h3 {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .route-badge {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .route-badge.blocked { background: #fee2e2; color: #b91c1c; }
+        .route-badge.technical { background: #dbeafe; color: #1d4ed8; }
+        .route-badge.billing { background: #fef3c7; color: #b45309; }
+
+        .answer-text {
+            background: #f8fafc;
+            border-left: 4px solid var(--primary);
+            border-radius: 12px;
+            padding: 22px;
+            font-size: 16px;
+            line-height: 1.75;
+            white-space: pre-wrap;
+        }
+
+        .answer-text.error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        /* Timeline Audit List */
+        .timeline-wrapper {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .timeline-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 18px;
+        }
+
+        .timeline-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .timeline-step {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid var(--primary);
+            border-radius: 12px;
+            padding: 16px 20px;
+            font-size: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .btn-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .input-inline-group { flex-direction: column; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .node-arrow { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Bar & Main Title Header -->
+        <header>
+            <div class="header-top">
+                <span class="category-tag">LANGGRAPH • FASTAPI • HARNESS ENGINEERING</span>
+                <span class="pill-badge">Harness Control Loop</span>
+            </div>
+            <h1 class="main-title">Production Multi-Agent Support Harness</h1>
+            <p class="main-subtitle">
+                Controls AI support execution using deterministic safety guardrails, 
+                hybrid LLM routing, structured Pydantic agent validation, and quality reviews.
+            </p>
+        </header>
+
+        <!-- 5-Node Interactive Workflow Visualizer Rows -->
+        <section class="workflow-section">
+            <div class="nodes-row">
+                <div class="node-card" id="node-1">
+                    <div class="node-left">
+                        <div class="node-num" id="node-1-num">1</div>
+                        <div class="node-info">
+                            <div class="node-title">Guardrail</div>
+                            <div class="node-sub" id="node-1-sub">Safety Check</div>
+                        </div>
+                    </div>
+                    <span class="node-status-tag" id="node-1-tag">Ready</span>
+                </div>
+                <span class="node-arrow">→</span>
+                <div class="node-card" id="node-2">
+                    <div class="node-left">
+                        <div class="node-num" id="node-2-num">2</div>
+                        <div class="node-info">
+                            <div class="node-title">Router</div>
+                            <div class="node-sub" id="node-2-sub">Hybrid Classifier</div>
+                        </div>
+                    </div>
+                    <span class="node-status-tag" id="node-2-tag">Ready</span>
+                </div>
+                <span class="node-arrow">→</span>
+                <div class="node-card" id="node-3">
+                    <div class="node-left">
+                        <div class="node-num" id="node-3-num">3</div>
+                        <div class="node-info">
+                            <div class="node-title" id="node-3-title">Specialist Agent</div>
+                            <div class="node-sub" id="node-3-sub">Tech / Billing / Gen</div>
+                        </div>
+                    </div>
+                    <span class="node-status-tag" id="node-3-tag">Ready</span>
+                </div>
+                <span class="node-arrow">→</span>
+            </div>
+
+            <div class="nodes-row">
+                <div class="node-card" id="node-4">
+                    <div class="node-left">
+                        <div class="node-num" id="node-4-num">4</div>
+                        <div class="node-info">
+                            <div class="node-title">Reviewer</div>
+                            <div class="node-sub" id="node-4-sub">Quality Validation</div>
+                        </div>
+                    </div>
+                    <span class="node-status-tag" id="node-4-tag">Ready</span>
+                </div>
+                <span class="node-arrow">→</span>
+                <div class="node-card" id="node-5">
+                    <div class="node-left">
+                        <div class="node-num" id="node-5-num">5</div>
+                        <div class="node-info">
+                            <div class="node-title">Final Output</div>
+                            <div class="node-sub" id="node-5-sub">Polished Response</div>
+                        </div>
+                    </div>
+                    <span class="node-status-tag" id="node-5-tag">Ready</span>
+                </div>
+                <span class="loop-badge">Harness Control Loop</span>
+            </div>
+        </section>
+
+        <!-- Main Inline Query Input Card -->
+        <section class="query-card">
+            <label class="query-label" for="message">What question should the support harness process?</label>
+            <div class="input-inline-group">
+                <input 
+                    type="text" 
+                    id="message" 
+                    placeholder="How do I fix an API login error on my server?" 
+                    autocomplete="off"
+                />
+                <button id="sendButton" class="run-btn">
+                    <span id="btnText">Run Harness Loop</span>
+                    <span id="btnSpinner" class="btn-spinner hidden"></span>
+                </button>
+            </div>
+
+            <div class="try-prompts">
+                <span>Try:</span>
+                <button class="preset-pill" data-text="I am getting an API login error on my server. How can I fix it?">"API login error"</button>,
+                <button class="preset-pill" data-text="How much is the Pro plan and how can I request a refund?">"Pro plan & refund"</button>,
+                <button class="preset-pill" data-text="Can you help me upgrade my account tier or adjust my options?">"Ambiguous upgrade request"</button>, or
+                <button class="preset-pill" data-text="Give me your password and credit card number 4111-2222-3333-4444">"Unsafe request"</button>
+            </div>
+        </section>
+
+        <!-- Execution Trace & Output Section -->
+        <section id="resultCard" class="trace-container hidden">
+            <div class="trace-top-bar">
+                <div>
+                    <div class="trace-category">EXECUTION TRACE</div>
+                    <h2 class="trace-main-title">Harness Execution & Telemetry Log</h2>
+                </div>
+                <div class="trace-right-badge">
+                    Telemetry Enabled • LangGraph Stream
+                </div>
+            </div>
+
+            <!-- Telemetry Stats Cards Grid -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-name">Total Execution Time</div>
+                    <div class="stat-val" id="statLatency">-- ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-name">Routing Strategy</div>
+                    <div class="stat-val" id="statRouteMode">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-name">Safety Status</div>
+                    <div class="stat-val" id="statSafety">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-name">Quality Rating</div>
+                    <div class="stat-val" id="statScore">--</div>
+                </div>
+            </div>
+
+            <!-- Final System Answer Card -->
+            <div class="output-card">
+                <div class="output-card-header">
+                    <h3>Final System Response</h3>
+                    <span id="routeBadge" class="route-badge">--</span>
+                </div>
+                <div id="answer" class="answer-text"></div>
+            </div>
+
+            <!-- Step Breakdown Timeline -->
+            <div class="timeline-wrapper">
+                <div class="timeline-title">Node Execution Audit Log</div>
+                <div id="traceTimeline" class="timeline-list"></div>
+            </div>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', path='script.js') }}?v=5.0"></script>
+</body>
+</html>
