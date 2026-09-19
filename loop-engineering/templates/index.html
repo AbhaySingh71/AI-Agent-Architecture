@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Aspect Evaluator Jury & Web Search Agent</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}?v=2">
+</head>
+<body>
+    <main class="page-shell">
+        <section class="hero">
+            <div>
+                <span class="eyebrow">LangGraph · DuckDuckGo · Jury Pattern</span>
+                <h1>Advanced Multi-Agent Self-Correcting System</h1>
+                <p class="hero-copy">
+                    Grounds initial explanations using live DuckDuckGo web search, then subjects the draft to a 3-agent Jury Panel (Fact Checker, Pedagogy/Clarity, Structure) and a Consensus Judge loop.
+                </p>
+            </div>
+            <div class="loop-badge">⚖️ Jury Evaluator Loop</div>
+        </section>
+
+        <section class="workflow" aria-label="Agent workflow">
+            <div class="workflow-node"><span>1</span><strong>Web Search</strong><small>DuckDuckGo</small></div>
+            <div class="arrow">→</div>
+            <div class="workflow-node"><span>2</span><strong>Writer</strong><small>Drafting</small></div>
+            <div class="arrow">→</div>
+            <div class="workflow-node"><span>3</span><strong>Jury Panel</strong><small>3 Evaluators</small></div>
+            <div class="arrow">→</div>
+            <div class="workflow-node"><span>4</span><strong>Judge</strong><small>Consensus</small></div>
+            <div class="arrow">→</div>
+            <div class="workflow-node"><span>5</span><strong>Reviser</strong><small>Correction</small></div>
+            <div class="loop-arrow">↩ Consensus Loop</div>
+        </section>
+
+        <section class="input-card">
+            <label for="topic">What topic should the agents research & explain?</label>
+            <div class="input-row">
+                <input id="topic" type="text" value="{{ example_topic }}" maxlength="300" autocomplete="off">
+                <button id="runButton" type="button">Run Jury Loop</button>
+            </div>
+            <p class="hint">Try: “Explain Quantum Computing”, “What is RAG in AI?”, or “How do Transformers work?”</p>
+        </section>
+
+        <section id="status" class="status hidden" aria-live="polite"></section>
+
+        <section id="results" class="results hidden">
+            <div class="section-heading">
+                <div>
+                    <span class="eyebrow">Execution trace</span>
+                    <h2>Jury Execution & Correction Loop</h2>
+                </div>
+                <div id="summaryBadge" class="summary-badge"></div>
+            </div>
+            <div id="timeline" class="timeline"></div>
+
+            <div class="final-card">
+                <div class="final-heading">
+                    <div>
+                        <span class="eyebrow">Final output</span>
+                        <h2>Jury Accepted Answer</h2>
+                    </div>
+                    <span id="finalDecision" class="decision"></span>
+                </div>
+                <div id="finalAnswer" class="answer"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', path='/app.js') }}?v=2"></script>
+</body>
+</html>
+
+
