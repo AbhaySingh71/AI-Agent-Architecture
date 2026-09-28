@@ -1,0 +1,12 @@
+.env
+.mcp.json
+native_rag_app/.rag_state.json
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+*.egg-info/
+.pytest_cache/
+progresss_summary.md
